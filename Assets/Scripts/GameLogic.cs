@@ -24,6 +24,9 @@ public struct Othello
     public ulong white;
 
     public readonly ulong Empty => ~(black | white);
+    ulong blackMovesCache;
+    ulong whiteMovesCache;
+    bool cached;
 
     public static int ToIndex(int x, int y)
     {
@@ -58,6 +61,11 @@ public struct Othello
         black |= 1UL << ToIndex(4, 4);
         white = 1UL << ToIndex(3, 4);
         white |= 1UL << ToIndex(4, 3);
+
+        cached = false;
+        blackMovesCache = GetValidMoves(1);
+        whiteMovesCache = GetValidMoves(-1);
+        cached = true;
     }
 
     public bool IsFinished()
@@ -78,6 +86,11 @@ public struct Othello
 
     public ulong GetValidMoves(int color)
     {
+        if (cached)
+        {
+            return color == 1 ? blackMovesCache : whiteMovesCache;
+        }
+
         ulong friendly = color == 1 ? black : white;
         ulong opponent = color == 1 ? white : black;
         ulong moves = 0;
@@ -91,6 +104,13 @@ public struct Othello
         moves |= ValidDirectionMoves(friendly, opponent, Directions.SE);
         moves |= ValidDirectionMoves(friendly, opponent, Directions.SW);
 
+        if (color == 1)
+        {
+            blackMovesCache = moves;
+        } else
+        {
+            whiteMovesCache = moves;
+        }
         return moves;
     }
 
@@ -135,8 +155,12 @@ public struct Othello
 
         friendly |= moveBit | flipped;
         opponent &= ~flipped;
-
         Debug.Assert((friendly & opponent) == 0);
+
+        cached = false;
+        blackMovesCache = GetValidMoves(1);
+        whiteMovesCache = GetValidMoves(-1);
+        cached = true;
     }
 
     ulong FlipDirection(ulong friendly, ulong opponent, ulong moveBit, Func<ulong, ulong> shiftFunc)

@@ -11,13 +11,11 @@ public class Visualize : MonoBehaviour
 
     Othello board = new();
     int color = 1;
-    ulong validMovesCache = 0;
 
     // Start is called before the first frame update
     void Start()
     {
         board.Reset();
-        validMovesCache = board.GetValidMoves(color);
         UpdateBoard();
     }
 
@@ -33,16 +31,10 @@ public class Visualize : MonoBehaviour
                 var cellInfo = hit.transform.GetComponent<CellInfo>();
                 
                 // If we clicked on a valid move
-                if (cellInfo != null && Othello.GetFromBitmap(validMovesCache, cellInfo.x, cellInfo.y) == 1)
+                if (cellInfo != null && Othello.GetFromBitmap(board.GetValidMoves(color), cellInfo.x, cellInfo.y) == 1)
                 {
                     board.MakeMove(cellInfo.x, cellInfo.y, color);
                     color = -color;
-                    validMovesCache = board.GetValidMoves(color);
-                    if (validMovesCache == 0)
-                    {
-                        color = -color;
-                        validMovesCache = board.GetValidMoves(color);
-                    }
                     UpdateBoard();
                 }
             }
@@ -70,7 +62,9 @@ public class Visualize : MonoBehaviour
                     var cellInfo = selection.GetComponent<CellInfo>();
                     cellInfo.x = x;
                     cellInfo.y = y;
-                    if (Othello.GetFromBitmap(validMovesCache, x, y) == 1)
+
+                    // Mark valid moves
+                    if (Othello.GetFromBitmap(board.GetValidMoves(color), x, y) == 1)
                     {
                         selection.GetComponent<Renderer>().material.color = Color.red;
                     }
