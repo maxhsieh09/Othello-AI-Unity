@@ -11,6 +11,7 @@ public class Visualize : MonoBehaviour
     public List<GameObject> pieces = new List<GameObject>();
     public float spacing = 0.04f;
     public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI turnText;
     public float AIDelay = 0.5f;
     public int searchDepth = 4;
 
@@ -21,9 +22,11 @@ public class Visualize : MonoBehaviour
     bool isProcessingTurn = false;
     bool playing = true;
 
-    void Start()
+    void ResetState()
     {
         board.Reset();
+        playing = true;
+        isProcessingTurn = false;
         currentColor = 1; // Black always starts in Othello
         VisualizeBoard();
         
@@ -34,8 +37,32 @@ public class Visualize : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        ResetState();
+    }
+
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            ResetState();
+        }
+
+        if (playing)
+        {
+            if (currentColor == humanColor)
+            {
+                turnText.text = "Your Turn";
+            } else
+            {
+                turnText.text = "AI is Thinking...";
+            }
+        } else
+        {
+            turnText.text = "";
+        }
+
         if (!playing || isProcessingTurn) return;
 
         // Only capture human clicks if it is genuinely the human's turn
