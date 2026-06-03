@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class Visualize : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class Visualize : MonoBehaviour
     public GameObject piecePrefab;
     public List<GameObject> pieces = new List<GameObject>();
     public float spacing = 0.04f;
+    public TextMeshProUGUI scoreText;
 
     Othello board = new();
     int color = 1;
@@ -35,6 +37,12 @@ public class Visualize : MonoBehaviour
                 {
                     board.MakeMove(cellInfo.x, cellInfo.y, color);
                     color = -color;
+
+                    // If there is no valid moves, pass and switch player
+                    if (board.GetValidMoves(color) == 0)
+                    {
+                        color = -color;
+                    }
                     UpdateBoard();
                 }
             }
@@ -77,5 +85,26 @@ public class Visualize : MonoBehaviour
                 }
             }
         }
+
+        UpdateScore();
+    }
+
+    void UpdateScore()
+    {
+        string text = $"Black: {board.GetScore(1)} / White: {board.GetScore(-1)}";
+        if (board.IsFinished())
+        {
+            if (board.GetWinner() == 1)
+            {
+                text += " - Black wins!";
+            } else if (board.GetWinner() == -1)
+            {
+                text += " - White wins!";
+            } else
+            {
+                text += " - Draw!";
+            }
+        }
+        scoreText.text = text;
     }
 }
