@@ -6,6 +6,7 @@ public class OthelloAI
 {
     const ulong cornerMask = 0x8100000000000081;
     const ulong edgeMask = 0x7e8181818181817e;
+    const ulong dangerMask = 0x42000000004200;
 
     float Evaluate(Othello board)
     {
@@ -25,9 +26,10 @@ public class OthelloAI
         int total = Othello.CountBits(bitmap);
         int corners = Othello.CountBits(bitmap & cornerMask);
         int edges = Othello.CountBits(bitmap & edgeMask);
+        int danger = Othello.CountBits(bitmap & dangerMask);
         int mobility = Othello.CountBits(board.GetValidMoves(color));
 
-        return corners * 20 + edges * 2 + total + mobility * 3;
+        return corners * 20 + edges * 2 - danger * 5 + total + mobility * 3;
     }
 
     IEnumerable<int> GenerateMoves(ulong bitmap)
