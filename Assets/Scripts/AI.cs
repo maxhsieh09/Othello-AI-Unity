@@ -100,17 +100,23 @@ public class OthelloAI
 
     public int GetBestMove(Othello board, int depth, int color)
     {
+        var sysRandom = new System.Random();
+
         float bestValue = float.MinValue;
         int bestMove = -1;
         foreach (var move in GenerateMoves(board.GetValidMoves(color)))
         {
             var boardCopy = board;
             boardCopy.MakeMove(move, color);
-            float value = Negamax(boardCopy, depth, float.MinValue, float.MaxValue, -color) * color;
+            float value = -Negamax(boardCopy, depth, float.MinValue, float.MaxValue, -color);
             if (value > bestValue)
             {
                 bestValue = value;
                 bestMove = move;
+            }
+            else if (value == bestValue && sysRandom.NextDouble() < 0.5)
+            {
+                bestMove = move; // Break ties randomly
             }
         }
 
