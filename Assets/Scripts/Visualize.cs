@@ -12,6 +12,7 @@ public class Visualize : MonoBehaviour
     public float spacing = 0.04f;
     public TextMeshProUGUI scoreText;
     public float AIDelay = 0.5f;
+    public int searchDepth = 4;
 
     Othello board = new();
     public int humanColor = 1; // 1 = Black, -1 = White
@@ -92,7 +93,7 @@ public class Visualize : MonoBehaviour
                 await Task.Delay((int)(AIDelay * 1000));
 
                 // Clear structural caching state variables before thinking to avoid stale reads
-                int aiMove = await Task.Run(() => AI.GetBestMove(board, 4, currentColor));
+                int aiMove = await Task.Run(() => AI.GetBestMove(board, searchDepth, currentColor));
                 
                 if (aiMove != -1)
                 {

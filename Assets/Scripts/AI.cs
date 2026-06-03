@@ -4,14 +4,30 @@ using UnityEngine;
 
 public class OthelloAI
 {
+    const ulong cornerMask = 0x8100000000000081;
+    const ulong edgeMask = 0x7e8181818181817e;
+
     float Evaluate(Othello board)
     {
         if (board.IsFinished())
         {
-            return board.GetWinner() * 1000 + board.GetScore(1) - board.GetScore(-1);
+            return board.GetWinner() * 2000 + board.GetScore(1) - board.GetScore(-1);
         }
-        // TODO: Implement corner and edge weighting
-        return board.GetScore(1) - board.GetScore(-1);
+
+        return EvaluateSingle(board, 1) - EvaluateSingle(board, -1);
+    }
+
+    float EvaluateSingle(Othello board, int color)
+    {
+        ulong bitmap = board.black;
+        if (color == -1) bitmap = board.white;
+        
+        int total = Othello.CountBits(bitmap);
+        int corners = Othello.CountBits(bitmap & cornerMask);
+        int edges = Othello.CountBits(bitmap & edgeMask);
+        int mobility = Othello.CountBits(board.GetValidMoves(color));
+
+        return corners * 20 + edges * 2 + total + mobility * 3;
     }
 
     IEnumerable<int> GenerateMoves(ulong bitmap)
@@ -88,7 +104,7 @@ public class OthelloAI
         {
             var boardCopy = board;
             boardCopy.MakeMove(move, color);
-            float value = Negamax(boardCopy, depth, float.MinValue, float.MaxValue, -color);
+            float value = Negamax(boardCopy, depth, float.MinValue, float.MaxValue, -color) * color;
             if (value > bestValue)
             {
                 bestValue = value;
@@ -100,6 +116,7 @@ public class OthelloAI
         {
             Debug.LogWarning($"No valid moves for AI, {board.GetValidMoves(color)}");
         }
+        Debug.Log($"Value: {bestValue}");
         return bestMove;
     }
 }

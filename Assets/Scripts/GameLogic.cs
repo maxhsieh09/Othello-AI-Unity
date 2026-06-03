@@ -56,7 +56,7 @@ public struct Othello
         return GetFromBitmap(black, x, y) - GetFromBitmap(white, x, y);
     }
 
-    static int CountBits(ulong value)
+    public static int CountBits(ulong value)
     {
         int count = 0;
         while (value != 0)

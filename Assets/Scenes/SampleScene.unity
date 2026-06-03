@@ -731,6 +731,9 @@ MonoBehaviour:
   pieces: []
   spacing: 0.04
   scoreText: {fileID: 1473047541}
+  AIDelay: 0
+  searchDepth: 6
+  humanColor: 1
 --- !u!1 &1473047539
 GameObject:
   m_ObjectHideFlags: 0
