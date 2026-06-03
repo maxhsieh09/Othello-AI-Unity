@@ -8,13 +8,25 @@ static class Directions
     const ulong notAFile = 0xFEFEFEFEFEFEFEFE;
     const ulong notHFile = 0x7F7F7F7F7F7F7F7F;
 
+    // Pure Vertical (No file masking needed)
     public static ulong N(ulong x) => x << 8;
     public static ulong S(ulong x) => x >> 8;
+
+    // Pure Horizontal
     public static ulong E(ulong x) => (x & notHFile) << 1;
     public static ulong W(ulong x) => (x & notAFile) >> 1;
+
+    // Diagonals (Corrected Masks and Shifts)
+    // NE = North (<< 8) + East (<< 1) = << 9. Must mask H-File before moving East.
     public static ulong NE(ulong x) => (x & notHFile) << 9;
+
+    // NW = North (<< 8) + West (>> 1) = << 7. Must mask A-File before moving West.
     public static ulong NW(ulong x) => (x & notAFile) << 7;
+
+    // SE = South (>> 8) + East (<< 1) = >> 7. Must mask H-File before moving East.
     public static ulong SE(ulong x) => (x & notHFile) >> 7;
+
+    // SW = South (>> 8) + West (>> 1) = >> 9. Must mask A-File before moving West.
     public static ulong SW(ulong x) => (x & notAFile) >> 9;
 }
 

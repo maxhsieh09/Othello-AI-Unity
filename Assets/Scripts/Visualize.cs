@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System.Threading.Tasks;
 
 public class Visualize : MonoBehaviour
 {
@@ -10,46 +11,118 @@ public class Visualize : MonoBehaviour
     public List<GameObject> pieces = new List<GameObject>();
     public float spacing = 0.04f;
     public TextMeshProUGUI scoreText;
+    public float AIDelay = 0.5f;
 
     Othello board = new();
-    int color = 1;
+    public int humanColor = 1; // 1 = Black, -1 = White
+    int currentColor = 1;  // Tracks whose turn it actively is
+    OthelloAI AI = new();
+    bool isProcessingTurn = false;
+    bool playing = true;
 
-    // Start is called before the first frame update
     void Start()
     {
         board.Reset();
-        UpdateBoard();
+        currentColor = 1; // Black always starts in Othello
+        VisualizeBoard();
+        
+        // If human chose White, kick off the AI's first move immediately
+        if (humanColor == -1)
+        {
+            _ = ProcessGameTurn();
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (!playing || isProcessingTurn) return;
+
+        // Only capture human clicks if it is genuinely the human's turn
+        if (currentColor == humanColor && Input.GetMouseButtonDown(0))
         {
             var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit))
             {
                 var cellInfo = hit.transform.GetComponent<CellInfo>();
-                
-                // If we clicked on a valid move
-                if (cellInfo != null && Othello.GetFromBitmap(board.GetValidMoves(color), cellInfo.x, cellInfo.y) == 1)
+                if (cellInfo != null)
                 {
-                    board.MakeMove(cellInfo.x, cellInfo.y, color);
-                    color = -color;
-
-                    // If there is no valid moves, pass and switch player
-                    if (board.GetValidMoves(color) == 0)
-                    {
-                        color = -color;
-                    }
-                    UpdateBoard();
+                    HumanMove(cellInfo.x, cellInfo.y);
                 }
             }
         }
     }
 
-    void UpdateBoard()
+    void HumanMove(int x, int y)
+    {
+        ulong humanMoves = board.GetValidMoves(humanColor);
+        if (Othello.GetFromBitmap(humanMoves, x, y) == 1)
+        {
+            board.MakeMove(x, y, humanColor);
+            
+            // Pass the turn to the AI side
+            currentColor = -humanColor;
+            VisualizeBoard();
+            
+            // Trigger turn processor
+            _ = ProcessGameTurn();
+        }
+    }
+
+    async Task ProcessGameTurn()
+    {
+        if (isProcessingTurn || !playing) return;
+        isProcessingTurn = true;
+
+        // 1. Check if the game is totally over
+        if (board.IsFinished())
+        {
+            playing = false;
+            isProcessingTurn = false;
+            VisualizeBoard();
+            return;
+        }
+
+        // 2. If it's the AI's turn to play
+        if (currentColor == -humanColor)
+        {
+            // Verify if AI actually has moves to make
+            if (board.GetValidMoves(currentColor) != 0)
+            {
+                await Task.Delay((int)(AIDelay * 1000));
+
+                // Clear structural caching state variables before thinking to avoid stale reads
+                int aiMove = await Task.Run(() => AI.GetBestMove(board, 4, currentColor));
+                
+                if (aiMove != -1)
+                {
+                    board.MakeMove(aiMove, currentColor);
+                }
+            }
+            else
+            {
+                Debug.Log("AI has no moves! PASSING turn back to Human.");
+            }
+
+            // Move turn back to Human
+            currentColor = humanColor;
+            VisualizeBoard();
+
+            // Fallback: If human is blocked immediately after AI turn, pass back to AI
+            if (board.GetValidMoves(humanColor) == 0 && !board.IsFinished())
+            {
+                Debug.Log("Human has no moves! PASSING turn back to AI.");
+                currentColor = -humanColor;
+                isProcessingTurn = false;
+                _ = ProcessGameTurn(); // Run turn processor again for AI
+                return;
+            }
+        }
+
+        isProcessingTurn = false;
+    }
+
+    void VisualizeBoard()
     {
         foreach (var piece in pieces)
         {
@@ -72,7 +145,7 @@ public class Visualize : MonoBehaviour
                     cellInfo.y = y;
 
                     // Mark valid moves
-                    if (Othello.GetFromBitmap(board.GetValidMoves(color), x, y) == 1)
+                    if (Othello.GetFromBitmap(board.GetValidMoves(currentColor), x, y) == 1)
                     {
                         selection.GetComponent<Renderer>().material.color = Color.red;
                     }
